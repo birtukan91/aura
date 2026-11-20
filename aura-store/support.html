@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order & Support — AURA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>html { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased">
+
+    <!-- Top Promo Banner -->
+    <div class="bg-zinc-900 text-white text-xs py-2.5 px-6 text-center font-medium tracking-wide">
+        🚚 FREE Express Shipping on orders over $200 • Use code <span class="bg-amber-400 text-zinc-950 font-bold px-2 py-0.5 rounded ml-1">AURA20</span> for 20% OFF!
+    </div>
+
+    <!-- Sticky Navbar -->
+    <nav class="sticky top-0 w-full z-30 backdrop-blur-md bg-white/90 border-b border-zinc-200">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-extrabold text-lg tracking-tighter">A</div>
+                <span class="font-extrabold text-2xl tracking-tight">AURA<span class="text-amber-500">.</span></span>
+            </a>
+
+            <div class="flex items-center gap-6 text-sm font-semibold">
+                <a href="index.html" class="text-zinc-500 hover:text-zinc-900 transition">Shop Gear</a>
+                <a href="about.html" class="text-zinc-500 hover:text-zinc-900 transition">Our Story</a>
+                <a href="support.html" class="text-zinc-900 border-b-2 border-amber-400 pb-1">Track Order & Support</a>
+            </div>
+
+            <a href="index.html" class="bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition">
+                ← Back to Shop
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content: Order Tracker + Support Form -->
+    <section class="py-16 px-6 max-w-6xl mx-auto">
+        <div class="text-center max-w-2xl mx-auto mb-14">
+            <span class="text-xs font-extrabold uppercase tracking-widest text-amber-600 bg-amber-100 px-3.5 py-1.5 rounded-full">24/7 Customer Care</span>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mt-4 mb-3">Track Your Order & Support</h1>
+            <p class="text-zinc-500 text-sm">Enter your order number below to see live GPS dispatch status, or message our warranty team.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-10 items-start">
+            <!-- Left: Interactive Live Order Tracker -->
+            <div class="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
+                <h2 class="text-xl font-extrabold mb-2">📦 Live Order Tracker</h2>
+                <p class="text-xs text-zinc-500 mb-6">Enter any order ID (e.g. <strong class="text-zinc-900">#AURA-9021</strong>) to check delivery status.</p>
+
+                <form onsubmit="trackOrder(event)" class="flex gap-2 mb-6">
+                    <input type="text" id="order-id-input" required value="#AURA-9021" placeholder="#AURA-9021" 
+                        class="flex-1 bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm font-mono font-bold focus:outline-none focus:border-zinc-900">
+                    <button type="submit" class="bg-zinc-900 hover:bg-amber-400 hover:text-zinc-950 text-white font-bold px-6 py-3 rounded-xl text-sm transition">
+                        Track →
+                    </button>
+                </form>
+
+                <!-- Dynamic Tracking Result Box -->
+                <div id="tracking-result" class="bg-zinc-900 text-white rounded-2xl p-6 space-y-5">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                        <div>
+                            <span class="text-[11px] text-zinc-400 block">Tracking Number</span>
+                            <span id="display-order-id" class="font-mono font-bold text-amber-400">#AURA-9021</span>
+                        </div>
+                        <span class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full">In Transit (FedEx Air)</span>
+                    </div>
+
+                    <!-- Progress Steps -->
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center gap-3">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center font-bold">✓</span>
+                            <span>Order Confirmed & Quality Checked</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center font-bold">✓</span>
+                            <span>Dispatched from AURA Hub</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-5 h-5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center font-bold animate-pulse">●</span>
+                            <span class="font-bold text-amber-300">Out for Express Delivery (Arriving Tomorrow by 5:00 PM)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Contact & Warranty Support Form -->
+            <div class="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
+                <h2 class="text-xl font-extrabold mb-2">💬 Contact Warranty & Support</h2>
+                <p class="text-xs text-zinc-500 mb-6">Need a return label or technical help? Our engineers reply within 2 hours.</p>
+
+                <form id="support-form" onsubmit="submitSupport(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Your Email</label>
+                        <input type="email" required placeholder="you@email.com" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Topic</label>
+                        <select class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-zinc-900">
+                            <option>Order Status / Shipping Question</option>
+                            <option>2-Year Warranty Claim</option>
+                            <option>Return or Exchange Request</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Message</label>
+                        <textarea rows="3" required placeholder="How can we help you today?" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-900"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-3.5 rounded-xl text-sm transition">
+                        Send Message to Support →
+                    </button>
+                </form>
+
+                <div id="support-success" class="hidden text-center py-8">
+                    <div class="text-4xl mb-2">✅</div>
+                    <h3 class="font-extrabold text-lg">Ticket Created!</h3>
+                    <p class="text-xs text-zinc-500 mt-1">We've received your message and sent a ticket copy to your email.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-zinc-200 py-10 text-center text-sm text-zinc-500 mt-12">
+        <p>© 2026 AURA Goods Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function trackOrder(event) {
+            event.preventDefault();
+            const val = document.getElementById('order-id-input').value.trim();
+            document.getElementById('display-order-id').innerText = val.toUpperCase();
+        }
+
+        function submitSupport(event) {
+            event.preventDefault();
+            document.getElementById('support-form').classList.add('hidden');
+            document.getElementById('support-success').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

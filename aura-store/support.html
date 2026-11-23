@@ -125,17 +125,73 @@
     <footer class="bg-white border-t border-zinc-200 py-10 text-center text-sm text-zinc-500 mt-12">
         <p>© 2026 AURA Goods Inc. All rights reserved.</p>
     </footer>
-
-    <script>
+     <script>
         function trackOrder(event) {
             event.preventDefault();
-            const val = document.getElementById('order-id-input').value.trim();
-            document.getElementById('display-order-id').innerText = val.toUpperCase();
+            const val = document.getElementById('order-id-input').value.trim().toUpperCase();
+            const resultBox = document.getElementById('tracking-result');
+
+            // ትዕዛዙ በ #AURA- ወይም AURA- የሚጀምር ካልሆነ Error አሳይ!
+            if (!/^#?AURA-\d{4}$/.test(val)) {
+                resultBox.innerHTML = `
+                    <div class="text-center py-4 text-rose-400 font-bold text-sm">
+                        ❌ Order Not Found: "${val}" is not a valid AURA tracking ID.<br>
+                        <span class="text-xs text-zinc-400 font-normal">Please enter a valid format like <strong>#AURA-9021</strong></span>
+                    </div>
+                `;
+                return;
+            }
+
+            // ትክክል ከሆነ የTracking ውጤቱን አሳይ
+            const formattedId = val.startsWith('#') ? val : '#' + val;
+            resultBox.innerHTML = `
+                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                    <div>
+                        <span class="text-[11px] text-zinc-400 block">Tracking Number</span>
+                        <span class="font-mono font-bold text-amber-400">${formattedId}</span>
+                    </div>
+                    <span class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full">In Transit (FedEx Air)</span>
+                </div>
+                <div class="space-y-3 text-xs pt-2">
+                    <div class="flex items-center gap-3">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center font-bold">✓</span>
+                        <span>Order Confirmed & Quality Checked</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-5 h-5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center font-bold animate-pulse">●</span>
+                        <span class="font-bold text-amber-300">Out for Express Delivery (Arriving Tomorrow by 5:00 PM)</span>
+                    </div>
+                </div>
+            `;
         }
 
-        function submitSupport(event) {
+        async function submitSupport(event) {
             event.preventDefault();
-            document.getElementById('support-form').classList.add('hidden');
+            const form = document.getElementById('support-form');
+            const email = form.querySelector('input[type="email"]').value.trim();
+            const topic = form.querySelector('select').value;
+            const message = form.querySelector('textarea').value.trim();
+
+            if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email) || message.length < 5) {
+                alert("❌ Please enter a valid email address and a detailed message (at least 5 characters).");
+                return;
+            }
+
+            try {
+                // 👇 እዚህ ጋር የFormspree ሊንክህን አስገባ!
+                await fetch("https://formspree.io/f/mrpqyzge", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                    body: JSON.stringify({
+                        project: "AURA Support Ticket",
+                        customer_email: email,
+                        topic: topic,
+                        message: message
+                    })
+                });
+            } catch (e) {}
+
+            form.classList.add('hidden');
             document.getElementById('support-success').classList.remove('hidden');
         }
     </script>

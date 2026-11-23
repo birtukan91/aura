@@ -23,13 +23,13 @@
                 <span class="font-extrabold text-2xl tracking-tight">AURA<span class="text-amber-500">.</span></span>
             </a>
 
-            <div class="flex items-center gap-6 text-sm font-semibold">
+            <div class="flex items-center gap-6 text-xs sm:text-sm font-semibold">
                 <a href="index.html" class="text-zinc-500 hover:text-zinc-900 transition">Shop Gear</a>
                 <a href="about.html" class="text-zinc-500 hover:text-zinc-900 transition">Our Story</a>
                 <a href="support.html" class="text-zinc-900 border-b-2 border-amber-400 pb-1">Track Order & Support</a>
             </div>
 
-            <a href="index.html" class="bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition">
+            <a href="index.html" class="bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition">
                 ← Back to Shop
             </a>
         </div>
@@ -47,9 +47,9 @@
             <!-- Left: Interactive Live Order Tracker -->
             <div class="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
                 <h2 class="text-xl font-extrabold mb-2">📦 Live Order Tracker</h2>
-                <p class="text-xs text-zinc-500 mb-6">Enter any order ID (e.g. <strong class="text-zinc-900">#AURA-9021</strong>) to check delivery status.</p>
+                <p class="text-xs text-zinc-500 mb-6">Enter your order ID (Demo ID: <strong class="text-zinc-900">#AURA-9021</strong>) to check live delivery status.</p>
 
-                <form onsubmit="trackOrder(event)" class="flex gap-2 mb-6">
+                <form onsubmit="trackOrder(event)" class="flex gap-2 mb-6" novalidate>
                     <input type="text" id="order-id-input" required value="#AURA-9021" placeholder="#AURA-9021" 
                         class="flex-1 bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm font-mono font-bold focus:outline-none focus:border-zinc-900">
                     <button type="submit" class="bg-zinc-900 hover:bg-amber-400 hover:text-zinc-950 text-white font-bold px-6 py-3 rounded-xl text-sm transition">
@@ -67,7 +67,6 @@
                         <span class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full">In Transit (FedEx Air)</span>
                     </div>
 
-                    <!-- Progress Steps -->
                     <div class="space-y-3 text-xs">
                         <div class="flex items-center gap-3">
                             <span class="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center font-bold">✓</span>
@@ -85,37 +84,42 @@
                 </div>
             </div>
 
-            <!-- Right: Contact & Warranty Support Form -->
+            <!-- Right: Contact & Warranty Support Form with Strict Validation -->
             <div class="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
                 <h2 class="text-xl font-extrabold mb-2">💬 Contact Warranty & Support</h2>
                 <p class="text-xs text-zinc-500 mb-6">Need a return label or technical help? Our engineers reply within 2 hours.</p>
 
-                <form id="support-form" onsubmit="submitSupport(event)" class="space-y-4">
+                <form id="support-form" onsubmit="submitSupport(event)" class="space-y-4" novalidate>
                     <div>
-                        <label class="block text-xs font-bold text-zinc-700 mb-1">Your Email</label>
-                        <input type="email" required placeholder="you@email.com" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-900">
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Your Email Address *</label>
+                        <input type="email" id="support-email" required placeholder="you@email.com" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-900">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-zinc-700 mb-1">Topic</label>
-                        <select class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-zinc-900">
+                        <select id="support-topic" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-zinc-900">
                             <option>Order Status / Shipping Question</option>
                             <option>2-Year Warranty Claim</option>
                             <option>Return or Exchange Request</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-zinc-700 mb-1">Message</label>
-                        <textarea rows="3" required placeholder="How can we help you today?" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-900"></textarea>
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Detailed Message (Min. 10 chars) *</label>
+                        <textarea id="support-message" rows="3" required placeholder="Please describe your issue or include your order number..." class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-900"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-3.5 rounded-xl text-sm transition">
+
+                    <!-- Red Validation Error Box -->
+                    <p id="support-error-box" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3 font-bold text-center"></p>
+
+                    <button type="submit" id="support-submit-btn" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-3.5 rounded-xl text-sm transition">
                         Send Message to Support →
                     </button>
                 </form>
 
                 <div id="support-success" class="hidden text-center py-8">
-                    <div class="text-4xl mb-2">✅</div>
-                    <h3 class="font-extrabold text-lg">Ticket Created!</h3>
-                    <p class="text-xs text-zinc-500 mt-1">We've received your message and sent a ticket copy to your email.</p>
+                    <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-3 font-bold">✓</div>
+                    <h3 class="font-extrabold text-lg">Support Ticket Created!</h3>
+                    <p class="text-xs text-zinc-500 mt-1 mb-4">We've received your message and sent a confirmation copy to your email.</p>
+                    <button onclick="resetSupportForm()" class="text-xs font-bold text-zinc-900 underline">Send another message</button>
                 </div>
             </div>
         </div>
@@ -125,24 +129,26 @@
     <footer class="bg-white border-t border-zinc-200 py-10 text-center text-sm text-zinc-500 mt-12">
         <p>© 2026 AURA Goods Inc. All rights reserved.</p>
     </footer>
-     <script>
+
+    <script>
+        // 1. Strict Order ID Validation
         function trackOrder(event) {
             event.preventDefault();
             const val = document.getElementById('order-id-input').value.trim().toUpperCase();
             const resultBox = document.getElementById('tracking-result');
 
-            // ትዕዛዙ በ #AURA- ወይም AURA- የሚጀምር ካልሆነ Error አሳይ!
-            if (!/^#?AURA-\d{4}$/.test(val)) {
+            // Must match #AURA-XXXX and not be fake repeating digits like #AURA-0000 or #AURA-1111
+            const match = val.match(/^#?AURA-(\d{4})$/);
+            if (!match || /^(\d)\1{3}$/.test(match[1])) {
                 resultBox.innerHTML = `
                     <div class="text-center py-4 text-rose-400 font-bold text-sm">
-                        ❌ Order Not Found: "${val}" is not a valid AURA tracking ID.<br>
-                        <span class="text-xs text-zinc-400 font-normal">Please enter a valid format like <strong>#AURA-9021</strong></span>
+                        ❌ Order Not Found: "${val || 'Empty'}" is not in our dispatch database.<br>
+                        <span class="text-xs text-zinc-400 font-normal mt-1 block">Please enter a valid non-repeating order ID (e.g. <strong>#AURA-9021</strong>).</span>
                     </div>
                 `;
                 return;
             }
 
-            // ትክክል ከሆነ የTracking ውጤቱን አሳይ
             const formattedId = val.startsWith('#') ? val : '#' + val;
             resultBox.innerHTML = `
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
@@ -158,6 +164,10 @@
                         <span>Order Confirmed & Quality Checked</span>
                     </div>
                     <div class="flex items-center gap-3">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center font-bold">✓</span>
+                        <span>Dispatched from AURA Hub</span>
+                    </div>
+                    <div class="flex items-center gap-3">
                         <span class="w-5 h-5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center font-bold animate-pulse">●</span>
                         <span class="font-bold text-amber-300">Out for Express Delivery (Arriving Tomorrow by 5:00 PM)</span>
                     </div>
@@ -165,17 +175,37 @@
             `;
         }
 
+        // 2. Strict Support Form Validation + Formspree Backend
         async function submitSupport(event) {
             event.preventDefault();
             const form = document.getElementById('support-form');
-            const email = form.querySelector('input[type="email"]').value.trim();
-            const topic = form.querySelector('select').value;
-            const message = form.querySelector('textarea').value.trim();
+            const email = document.getElementById('support-email').value.trim();
+            const topic = document.getElementById('support-topic').value;
+            const message = document.getElementById('support-message').value.trim();
+            const errBox = document.getElementById('support-error-box');
+            const submitBtn = document.getElementById('support-submit-btn');
 
-            if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email) || message.length < 5) {
-                alert("❌ Please enter a valid email address and a detailed message (at least 5 characters).");
+            function showSupportErr(msg) {
+                errBox.innerText = msg;
+                errBox.classList.remove('hidden');
+            }
+
+            // Strict Email Check (Requires valid domain & at least 2-letter extension)
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email) || email.includes("test@test") || email.endsWith(".c")) {
+                showSupportErr("❌ Invalid Email Address: Please enter a real email address (e.g. name@gmail.com).");
                 return;
             }
+
+            // Message Length Check
+            if (message.length < 10) {
+                showSupportErr("❌ Message Too Short: Please provide at least 10 characters describing your request.");
+                return;
+            }
+
+            errBox.classList.add('hidden');
+            submitBtn.innerText = "Sending Ticket...";
+            submitBtn.disabled = true;
 
             try {
                 // 👇 እዚህ ጋር የFormspree ሊንክህን አስገባ!
@@ -193,7 +223,16 @@
 
             form.classList.add('hidden');
             document.getElementById('support-success').classList.remove('hidden');
+            form.reset();
+            submitBtn.innerText = "Send Message to Support →";
+            submitBtn.disabled = false;
+        }
+
+        function resetSupportForm() {
+            document.getElementById('support-form').classList.remove('hidden');
+            document.getElementById('support-success').classList.add('hidden');
         }
     </script>
 </body>
 </html>
+

@@ -464,17 +464,11 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
-                    // የዓለም ባንኮች የካርድ መፈተሻ ቀመር (Official Bank Luhn Algorithm)
+             // የባንክ ካርድ መፈተሻ ቀመር (Luhn Algorithm)
         function isValidLuhnCard(cardNo) {
-            // 1. Visa (4)፣ Mastercard (5 ወይም 2) ወይም Amex (3) መሆኑን ፈትሽ
             if (!/^[2345]\d{15}$/.test(cardNo)) return false;
-            
-            // 2. ተመሳሳይ ቁጥር ብቻ ከሆነ (ለምሳሌ 4444444444444444) ከልክል
             if (/^(\d)\1{15}$/.test(cardNo)) return false;
-
-            // 3. Luhn Checksum Mathematical Formula
-            let sum = 0;
-            let shouldDouble = false;
+            let sum = 0, shouldDouble = false;
             for (let i = cardNo.length - 1; i >= 0; i--) {
                 let digit = parseInt(cardNo.charAt(i), 10);
                 if (shouldDouble) {
@@ -487,60 +481,77 @@
             return (sum % 10) === 0;
         }
 
-        // Strict Bank Validation + Formspree Integration
+        // ቀይ Error ሳጥን ራሱ እየፈጠረ የሚያሳይ የተሟላ የክፍያ ຟັງክሽን!
         async function processPayment(event) {
             event.preventDefault();
-            const custName = document.getElementById('cust-name').value.trim();
-            const custEmail = document.getElementById('cust-email').value.trim();
-            const custCity = document.getElementById('cust-city').value.trim();
-            const custAddress = document.getElementById('cust-address').value.trim();
-            const cardNumber = document.getElementById('card-num').value.replace(/[\s-]+/g, '');
-            const cardExpiry = document.getElementById('card-exp').value.trim();
-            const cardCvc = document.getElementById('card-cvc').value.trim();
-            const errEl = document.getElementById('checkout-error-box');
+            const form = event.target;
+            const inputs = form.querySelectorAll('input');
             const payBtn = document.getElementById('pay-now-btn');
 
-            function showErr(msg) {
+            const custName = inputs[0] ? inputs[0].value.trim() : '';
+            const custEmail = inputs[1] ? inputs[1].value.trim() : '';
+            const custCity = inputs[2] ? inputs[2].value.trim() : '';
+            const custAddress = inputs[3] ? inputs[3].value.trim() : '';
+            const cardNumber = inputs[4] ? inputs[4].value.replace(/[\s-]+/g, '') : '';
+            const cardExpiry = inputs[5] ? inputs[5].value.trim() : '';
+            const cardCvc = inputs[6] ? inputs[6].value.trim() : '';
+
+            // 1. የቀይ Error ሳጥን በHTML ውስጥ ከሌለ፣ JavaScript ራሱ ይፈጥረዋል!
+            let errEl = document.getElementById('checkout-error-box');
+            if (!errEl) {
+                errEl = document.createElement('div');
+                errEl.id = 'checkout-error-box';
+                form.insertBefore(errEl, payBtn);
+            }
+            errEl.className = "text-xs text-red-700 bg-red-100 border-2 border-red-500 rounded-xl p-3.5 font-extrabold text-center my-3 shadow-md";
+
+            // ሁሉንም ሳጥኖች መጀመሪያ ወደ መደበኛ ቀለማቸው መልስ
+            inputs.forEach(inp => inp.classList.remove('border-red-500', 'bg-red-50', 'text-red-700'));
+
+            // ቀይ Error ማሳያ እና የተሳሳተውን ሳጥን ቀይ ማድረጊያ
+            function triggerError(msg, badInput) {
                 errEl.innerText = msg;
                 errEl.classList.remove('hidden');
+                if (badInput) {
+                    badInput.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                    badInput.focus();
+                }
             }
 
+            // 2. እያንዳንዱን መረጃ ፈትሽ!
             if (custName.length < 3 || /\d/.test(custName)) {
-                showErr("❌ Invalid Name: Please enter your real full name (letters only).");
+                triggerError("❌ ERROR: Please enter your real full name (letters only).", inputs[0]);
                 return;
             }
             if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(custEmail)) {
-                showErr("❌ Invalid Email: Please enter a valid email address (e.g. alex@gmail.com).");
+                triggerError("❌ ERROR: Invalid Email Address! Please enter a real email (e.g. name@gmail.com).", inputs[1]);
                 return;
             }
-            if (custCity.length < 2 || custAddress.length < 5) {
-                showErr("❌ Invalid Address: Please enter your full street address and city.");
+            if (custCity.length < 2 || custAddress.length < 4) {
+                triggerError("❌ ERROR: Please enter a valid shipping city and street address.", inputs[3]);
                 return;
             }
-
-            // እውነተኛ የባንክ ካርድ ቁጥር መሆኑን በ Luhn Algorithm ፈትሽ!
+            if (!/^\d{16}$/.test(cardNumber)) {
+                triggerError("❌ CARD ERROR: Card number must be 16 digits (numbers only, no letters)!", inputs[4]);
+                return;
+            }
             if (!isValidLuhnCard(cardNumber)) {
-                showErr("❌ Card Declined: Invalid Visa/Mastercard number. (For demo testing, use official Stripe test card: 4242 4242 4242 4242)");
+                triggerError("❌ CARD DECLINED: Fake or invalid bank card number! (For testing, use: 4242 4242 4242 4242)", inputs[4]);
                 return;
             }
 
-            // ወሩና ዓመቱ ትክክል መሆኑን እና ጊዜው ያላለፈበት (2026+) መሆኑን ፈትሽ!
             const expMatch = cardExpiry.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
-            if (!expMatch) {
-                showErr("❌ Invalid Expiry Date: Use MM/YY format (e.g. 08/28).");
-                return;
-            }
-            const expYear = parseInt(expMatch[2], 10);
-            if (expYear < 26) {
-                showErr("❌ Card Expired: Please enter a card with an expiration year of 2026 or later (e.g. 08/28).");
+            if (!expMatch || parseInt(expMatch[2], 10) < 26) {
+                triggerError("❌ EXPIRY ERROR: Enter a valid future date in MM/YY format (e.g. 08/28).", inputs[5]);
                 return;
             }
 
             if (!/^\d{3,4}$/.test(cardCvc)) {
-                showErr("❌ Invalid CVC: Security code must be 3 or 4 digits (e.g. 123).");
+                triggerError("❌ CVC ERROR: Security code must be 3 or 4 digits (e.g. 123).", inputs[6]);
                 return;
             }
 
+            // 3. ሁሉም ትክክል ከሆነ Error-ኡን ደብቅና ክፍያውን ፈጽም!
             errEl.classList.add('hidden');
             payBtn.innerText = "Verifying Bank Card...";
             payBtn.disabled = true;
@@ -586,5 +597,3 @@
     </script>
 </body>
 </html>
-
-

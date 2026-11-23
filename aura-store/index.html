@@ -464,28 +464,632 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
-
-        function processPayment(event) {
+             async function processPayment(event) {
             event.preventDefault();
+            const form = event.target;
+            const inputs = form.querySelectorAll('input');
+            const custName = inputs[0].value.trim();
+            const custEmail = inputs[1].value.trim();
+            const custCity = inputs[2].value.trim();
+            const custAddress = inputs[3].value.trim();
+            const cardNumber = inputs[4].value.replace(/\s+/g, '');
+            const cardExpiry = inputs[5].value.trim();
+            const cardCvc = inputs[6].value.trim();
             const payBtn = document.getElementById('pay-now-btn');
-            const custName = document.getElementById('cust-name').value.trim();
 
-            payBtn.innerText = "Processing Payment...";
+            let errEl = document.getElementById('checkout-error-box');
+            if (!errEl) {
+                errEl = document.createElement('p');
+                errEl.id = 'checkout-error-box';
+                errEl.className = "text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3 font-bold text-center";
+                form.insertBefore(errEl, payBtn);
+            }
+
+            // 1. ኢሜይል ፈትሽ
+            if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(custEmail)) {
+                errEl.innerText = "❌ Invalid Email: Please enter a valid email address for your receipt.";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            // 2. የካርድ ቁጥር (ከ13 እስከ 16 ቁጥሮች ብቻ መሆኑን ፈትሽ)
+            if (!/^\d{13,16}$/.test(cardNumber)) {
+                errEl.innerText = "❌ Invalid Card Number: Please enter a valid 16-digit card number (numbers only).";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            // 3. CVC (3 ወይም 4 ቁጥር መሆኑን ፈትሽ)
+            if (!/^\d{3,4}$/.test(cardCvc)) {
+                errEl.innerText = "❌ Invalid CVC: Security code must be 3 or 4 digits (e.g. 123).";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            errEl.classList.add('hidden');
+            payBtn.innerText = "Processing Secure Payment...";
             payBtn.disabled = true;
 
-            setTimeout(() => {
-                document.getElementById('receipt-name').innerText = custName.split(' ')[0];
-                document.getElementById('order-number').innerText = '#AURA-' + Math.floor(1000 + Math.random() * 9000);
-                
-                document.getElementById('checkout-form-step').classList.add('hidden');
-                document.getElementById('checkout-success-step').classList.remove('hidden');
+            const orderRef = '#AURA-' + Math.floor(1000 + Math.random() * 9000);
+            const totalPaid = document.getElementById('cart-total').innerText;
 
-                // ቅርጫቱን አጽዳ
-                cart = [];
-                discountActive = false;
+            try {
+                // 👇 እዚህ ጋር የFormspree ሊንክህን አስገባ!
+                await fetch("https://formspree.io/f/YOUR_FORMSPREE_ID", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                    body: JSON.stringify({
+                        project: "AURA Store Order",
+                        order_number: orderRef,
+                        customer_name: custName,
+                        customer_email: custEmail,
+                        shipping_address: `${custAddress}, ${custCity}`,
+                        total_paid: totalPaid
+                    })
+                });
+            } catch (e) {}
+
+            document.getElementById('receipt-name').innerText = custName.split(' ')[0];
+            document.getElementById('order-number').innerText = orderRef;
+            document.getElementById('checkout-form-step').classList.add('hidden');
+            document.getElementById('checkout-success-step').classList.remove('hidden');
+
+            cart = [];
+            discountActive = false;
+            updateCartUI();
+            payBtn.disabled = false;
+        }
+
+        function closeCheckout() {
+            const modal = document.getElementById('checkout-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Initialize Store on Load
+        renderProducts();
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA — Premium Tech & Lifestyle Store</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; font-family: 'Inter', sans-serif; }
+        .product-card { transition: all 0.3s ease; }
+        .product-card:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white">
+
+    <!-- Top Promo Banner -->
+    <div class="bg-zinc-900 text-white text-xs py-2.5 px-6 text-center font-medium tracking-wide">
+        🚚 FREE Express Shipping on orders over $200 • Use code <span class="bg-amber-400 text-zinc-950 font-bold px-2 py-0.5 rounded ml-1">AURA20</span> for 20% OFF!
+    </div>
+
+    <!-- Sticky Navbar -->
+     <!-- Sticky Navbar (ከ3ቱም ገጾች ጋር የተገናኘ) -->
+    <nav class="sticky top-0 w-full z-30 backdrop-blur-md bg-white/90 border-b border-zinc-200">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-extrabold text-lg tracking-tighter">A</div>
+                <span class="font-extrabold text-2xl tracking-tight">AURA<span class="text-amber-500">.</span></span>
+            </a>
+
+            <!-- 3-Page Navigation Links -->
+            <div class="hidden md:flex items-center gap-6 text-sm font-semibold">
+                <a href="index.html" class="text-zinc-900 border-b-2 border-amber-400 pb-1">Shop Gear</a>
+                <a href="about.html" class="text-zinc-500 hover:text-zinc-900 transition">Our Story</a>
+                <a href="support.html" class="text-zinc-500 hover:text-zinc-900 transition">Track Order & Support</a>
+            </div>
+
+            <!-- Live Search Bar -->
+            <div class="hidden lg:flex flex-1 max-w-xs relative">
+                <input type="text" id="search-input" oninput="filterProducts()" placeholder="Search gear..." 
+                    class="w-full bg-zinc-100 border border-zinc-200 rounded-full pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-zinc-900 focus:bg-white transition">
+                <span class="absolute left-3 top-2 text-zinc-400 text-xs">🔍</span>
+            </div>
+
+            <!-- Cart Trigger Button -->
+            <div class="flex items-center gap-4">
+                <button onclick="toggleCart(true)" class="relative bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2.5 transition shadow-md">
+                    <span>🛍️ Bag</span>
+                    <span id="cart-count" class="bg-amber-400 text-zinc-950 text-xs font-extrabold w-5 h-5 rounded-full flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Featured Hero Product with Interactive Color Customizer -->
+    <section class="py-12 md:py-20 px-6 max-w-7xl mx-auto">
+        <div class="bg-zinc-900 text-white rounded-3xl p-8 md:p-14 grid md:grid-cols-2 gap-12 items-center shadow-2xl relative overflow-hidden">
+            <div>
+                <span class="inline-block bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-6">
+                    New Release • Flagship Edition
+                </span>
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-4">
+                    Aura Studio Pro <span id="hero-color-name" class="text-amber-400">Midnight</span>
+                </h1>
+                <p class="text-zinc-400 text-base md:text-lg mb-8 leading-relaxed">
+                    Spatial acoustic engineering with 48-hour battery life and adaptive active noise cancellation. Crafted from aerospace-grade aluminum.
+                </p>
+
+                <!-- Interactive Color Picker -->
+                <div class="mb-8">
+                    <span class="block text-xs uppercase tracking-wider text-zinc-400 mb-3">Select Finish — <strong id="selected-finish-text" class="text-white">Midnight Black</strong></span>
+                    <div class="flex items-center gap-3">
+                        <button onclick="switchHeroColor('Midnight', 'Midnight Black', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80', this)" 
+                            class="color-dot w-9 h-9 rounded-full bg-zinc-800 border-2 border-amber-400 ring-2 ring-amber-400/40 transition"></button>
+                        <button onclick="switchHeroColor('Silver', 'Lunar Silver', 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80', this)" 
+                            class="color-dot w-9 h-9 rounded-full bg-stone-300 border-2 border-transparent hover:scale-110 transition"></button>
+                        <button onclick="switchHeroColor('Gold', 'Champagne Gold', 'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=900&q=80', this)" 
+                            class="color-dot w-9 h-9 rounded-full bg-amber-500 border-2 border-transparent hover:scale-110 transition"></button>
+                    </div>
+                </div>
+
+                <!-- Price & Add to Cart -->
+                <div class="flex flex-wrap items-center gap-6">
+                    <div>
+                        <span class="text-xs text-zinc-400 block">Price</span>
+                        <span class="text-3xl font-extrabold">$249</span>
+                    </div>
+                    <button onclick="addHeroToCart()" class="bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold px-8 py-4 rounded-2xl transition shadow-lg shadow-amber-400/20">
+                        Add Custom Studio Pro to Bag →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Hero Image -->
+            <div class="relative">
+                <img id="hero-product-img" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80" 
+                     alt="Aura Studio Pro" 
+                     class="rounded-2xl w-full h-[360px] md:h-[420px] object-cover shadow-2xl border border-white/10 transition-all duration-300">
+            </div>
+        </div>
+    </section>
+
+    <!-- Store Catalog Section -->
+    <section id="shop" class="py-12 px-6 max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+            <div>
+                <h2 class="text-3xl font-extrabold tracking-tight">Trending Gear</h2>
+                <p class="text-zinc-500 text-sm"> minimal essentials designed for everyday performance.</p>
+            </div>
+
+            <!-- Category Filter Buttons -->
+            <div class="flex flex-wrap gap-2">
+                <button onclick="setCategory('all', this)" class="cat-btn bg-zinc-900 text-white px-4 py-2 rounded-full text-xs font-bold transition">All Products</button>
+                <button onclick="setCategory('audio', this)" class="cat-btn bg-white hover:bg-zinc-200 text-zinc-700 border border-zinc-200 px-4 py-2 rounded-full text-xs font-bold transition">🎧 Audio</button>
+                <button onclick="setCategory('watches', this)" class="cat-btn bg-white hover:bg-zinc-200 text-zinc-700 border border-zinc-200 px-4 py-2 rounded-full text-xs font-bold transition">⌚ Watches</button>
+                <button onclick="setCategory('accessories', this)" class="cat-btn bg-white hover:bg-zinc-200 text-zinc-700 border border-zinc-200 px-4 py-2 rounded-full text-xs font-bold transition">⚡ Accessories</button>
+            </div>
+        </div>
+
+        <!-- Products Grid (Rendered Dynamically via JS) -->
+        <div id="products-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </section>
+
+    <!-- Slide-Out Shopping Cart Drawer (Client Magnet!) -->
+    <div id="cart-overlay" class="fixed inset-0 bg-zinc-950/60 backdrop-blur-sm z-50 hidden">
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col justify-between p-6">
+            
+            <!-- Cart Header + Free Shipping Progress Bar -->
+            <div>
+                <div class="flex items-center justify-between border-b border-zinc-200 pb-4 mb-4">
+                    <h3 class="text-xl font-extrabold">Your Shopping Bag</h3>
+                    <button onclick="toggleCart(false)" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-sm font-bold">✕</button>
+                </div>
+
+                <!-- Dynamic Free Shipping Bar -->
+                <div class="bg-zinc-100 rounded-xl p-3.5 mb-4">
+                    <p id="shipping-text" class="text-xs font-semibold text-zinc-700 mb-2">Add <span class="text-zinc-900 font-bold">$200</span> more for FREE Express Shipping!</p>
+                    <div class="w-full h-2 bg-zinc-200 rounded-full overflow-hidden">
+                        <div id="shipping-bar" style="width: 0%;" class="h-full bg-amber-400 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Items List -->
+            <div id="cart-items" class="flex-1 overflow-y-auto space-y-4 pr-1 my-2"></div>
+
+            <!-- Cart Footer: Promo Code & Checkout -->
+            <div class="border-t border-zinc-200 pt-4 space-y-4">
+                <!-- Promo Code Input -->
+                <div class="flex gap-2">
+                    <input type="text" id="promo-input" placeholder="Promo code (Try AURA20)" class="flex-1 bg-zinc-100 border border-zinc-200 rounded-xl px-3.5 py-2 text-xs uppercase font-semibold focus:outline-none focus:border-zinc-900">
+                    <button onclick="applyPromo()" class="bg-zinc-200 hover:bg-zinc-300 text-zinc-900 px-4 py-2 rounded-xl text-xs font-bold transition">Apply</button>
+                </div>
+                <p id="promo-msg" class="hidden text-xs font-semibold text-emerald-600">✓ 20% Discount Code (AURA20) Applied!</p>
+
+                <!-- Subtotal & Total -->
+                <div class="space-y-1 text-sm">
+                    <div class="flex justify-between text-zinc-500">
+                        <span>Shipping:</span>
+                        <span id="cart-shipping" class="font-semibold text-zinc-800">$15.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-extrabold text-zinc-900 pt-2 border-t border-zinc-100">
+                        <span>Total:</span>
+                        <span id="cart-total">$0.00</span>
+                    </div>
+                </div>
+
+                <button onclick="openCheckout()" id="checkout-btn" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-4 rounded-2xl transition shadow-xl">
+                    Proceed to Instant Checkout →
+                </button>
+            </div>
+        </div>
+    </div>
+
+       <!-- Full Checkout & Payment Page Modal (ገጽ 2 እና 3) -->
+    <div id="checkout-modal" class="fixed inset-0 bg-zinc-950/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl relative my-8">
+            
+            <!-- VIEW 1: Shipping & Credit Card Payment Form -->
+            <div id="checkout-form-step">
+                <div class="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-widest text-amber-600">Secure Encrypted Checkout</span>
+                        <h3 class="text-xl font-extrabold text-zinc-900">Shipping & Payment</h3>
+                    </div>
+                    <button onclick="closeCheckout()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center text-sm font-bold">✕</button>
+                </div>
+
+                <form onsubmit="processPayment(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Full Name</label>
+                        <input type="text" id="cust-name" required placeholder="Alex Morgan" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-900">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-700 mb-1">Email for Receipt</label>
+                            <input type="email" required placeholder="alex@email.com" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-700 mb-1">City & Country</label>
+                            <input type="text" required placeholder="New York, USA" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-900">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 mb-1">Street Address</label>
+                        <input type="text" required placeholder="742 Evergreen Terrace, Apt 4B" class="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-zinc-900">
+                    </div>
+
+                    <!-- Credit Card Box -->
+                    <div class="pt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-zinc-700">Card Information (Demo)</label>
+                            <span class="text-xs">💳 Visa / Mastercard</span>
+                        </div>
+                        <div class="bg-zinc-50 border border-zinc-300 rounded-xl p-3 space-y-3">
+                            <input type="text" required maxlength="19" placeholder="4532 •••• •••• 8891" class="w-full bg-transparent text-sm font-mono focus:outline-none border-b border-zinc-200 pb-2">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" required maxlength="5" placeholder="MM/YY (e.g. 08/28)" class="w-full bg-transparent text-xs font-mono focus:outline-none">
+                                <input type="text" required maxlength="4" placeholder="CVC (e.g. 123)" class="w-full bg-transparent text-xs font-mono focus:outline-none border-l border-zinc-200 pl-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="pay-now-btn" class="w-full bg-zinc-900 hover:bg-amber-400 hover:text-zinc-950 text-white font-extrabold py-4 rounded-2xl transition shadow-xl mt-4">
+                        Pay <span id="checkout-pay-amount">$0.00</span> Now 🔒
+                    </button>
+                </form>
+            </div>
+
+            <!-- VIEW 2: Order Confirmed Receipt (Hidden until paid) -->
+            <div id="checkout-success-step" class="hidden text-center py-6">
+                <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4 font-bold">✓</div>
+                <span class="text-xs font-bold uppercase tracking-widest text-emerald-600">Payment Successful</span>
+                <h3 class="text-2xl font-extrabold mt-1 mb-2">Thank you, <span id="receipt-name">Customer</span>!</h3>
+                <p class="text-xs text-zinc-500 mb-6">Your order <span id="order-number" class="font-mono font-bold text-zinc-900">#AURA-9021</span> is confirmed and preparing for express dispatch.</p>
+                <button onclick="closeCheckout()" class="w-full bg-zinc-900 text-white font-bold py-3.5 rounded-xl text-sm">
+                    ← Return to Store
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <!-- Footer -->
+    <footer class="bg-white border-t border-zinc-200 py-10 text-center text-sm text-zinc-500 mt-16">
+        <p>© 2026 AURA Goods Inc. All rights reserved.</p>
+    </footer>
+
+    <!-- Store JavaScript Engine -->
+    <script>
+        // Store Products Database
+        const products = [
+            { id: 1, name: "Chronos Minimal Watch", category: "watches", price: 185, rating: "4.9", img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80", badge: "Best Seller" },
+            { id: 2, name: "Sonic Pods Pro Wireless", category: "audio", price: 140, rating: "4.8", img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80", badge: "New" },
+            { id: 3, name: "MagSafe Desk Charger", category: "accessories", price: 65, rating: "4.7", img: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=600&q=80", badge: "" },
+            { id: 4, name: "Aero Smart Watch Ultra", category: "watches", price: 295, rating: "5.0", img: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80", badge: "Limited" },
+            { id: 5, name: "BassCube Studio Speaker", category: "audio", price: 160, rating: "4.8", img: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=600&q=80", badge: "" },
+            { id: 6, name: "Tactile Mechanical Keypad", category: "accessories", price: 115, rating: "4.9", img: "https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=600&q=80", badge: "Popular" }
+        ];
+
+        let cart = [];
+        let activeCategory = 'all';
+        let discountActive = false;
+        let currentHeroFinish = "Midnight Black";
+        let currentHeroImg = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80";
+
+        // 1. Render Products Grid
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+
+            const filtered = products.filter(p => {
+                const matchesCat = activeCategory === 'all' || p.category === activeCategory;
+                const matchesSearch = p.name.toLowerCase().includes(searchQuery);
+                return matchesCat && matchesSearch;
+            });
+
+            grid.innerHTML = filtered.map(p => `
+                <div class="product-card bg-white border border-zinc-200/80 rounded-3xl overflow-hidden flex flex-col justify-between shadow-sm">
+                    <div>
+                        <div class="relative h-64 bg-zinc-100 overflow-hidden">
+                            <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover">
+                            ${p.badge ? `<span class="absolute top-3 left-3 bg-zinc-900 text-white text-[11px] font-bold px-3 py-1 rounded-full">${p.badge}</span>` : ''}
+                            <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-zinc-900 text-xs font-bold px-2.5 py-1 rounded-full">★ ${p.rating}</span>
+                        </div>
+                        <div class="p-6">
+                            <div class="text-xs uppercase tracking-wider text-zinc-400 font-semibold mb-1">${p.category}</div>
+                            <div class="flex justify-between items-start gap-2">
+                                <h3 class="font-bold text-lg text-zinc-900">${p.name}</h3>
+                                <span class="font-extrabold text-lg text-zinc-900">$${p.price}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6">
+                        <button onclick="addToCart(${p.id})" class="w-full bg-zinc-900 hover:bg-amber-400 hover:text-zinc-950 text-white font-bold py-3 rounded-xl text-sm transition">
+                            + Add to Bag
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 2. Hero Product Customizer
+        function switchHeroColor(shortName, fullName, imgUrl, btnEl) {
+            currentHeroFinish = fullName;
+            currentHeroImg = imgUrl;
+            document.getElementById('hero-color-name').innerText = shortName;
+            document.getElementById('selected-finish-text').innerText = fullName;
+            document.getElementById('hero-product-img').src = imgUrl;
+
+            document.querySelectorAll('.color-dot').forEach(btn => {
+                btn.classList.remove('border-amber-400', 'ring-2', 'ring-amber-400/40');
+                btn.classList.add('border-transparent');
+            });
+            btnEl.classList.remove('border-transparent');
+            btnEl.classList.add('border-amber-400', 'ring-2', 'ring-amber-400/40');
+        }
+
+        function addHeroToCart() {
+            const heroItem = {
+                id: 'hero-' + currentHeroFinish,
+                name: `Aura Studio Pro (${currentHeroFinish})`,
+                price: 249,
+                img: currentHeroImg,
+                qty: 1
+            };
+            const existing = cart.find(item => item.id === heroItem.id);
+            if (existing) existing.qty++;
+            else cart.push(heroItem);
+
+            updateCartUI();
+            toggleCart(true);
+        }
+
+        // 3. Category & Search Filtering
+        function setCategory(cat, btnEl) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn bg-white hover:bg-zinc-200 text-zinc-700 border border-zinc-200 px-4 py-2 rounded-full text-xs font-bold transition";
+            });
+            btnEl.className = "cat-btn bg-zinc-900 text-white px-4 py-2 rounded-full text-xs font-bold transition";
+            renderProducts();
+        }
+
+        function filterProducts() {
+            renderProducts();
+        }
+
+        // 4. Shopping Cart Logic
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existing = cart.find(item => item.id === productId);
+            if (existing) existing.qty++;
+            else cart.push({ ...product, qty: 1 });
+
+            updateCartUI();
+            toggleCart(true);
+        }
+
+        function changeQty(itemId, delta) {
+            const item = cart.find(i => String(i.id) === String(itemId));
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => String(i.id) !== String(itemId));
+            }
+            updateCartUI();
+        }
+
+        function applyPromo() {
+            const code = document.getElementById('promo-input').value.trim().toUpperCase();
+            if (code === 'AURA20') {
+                discountActive = true;
+                document.getElementById('promo-msg').classList.remove('hidden');
                 updateCartUI();
-                payBtn.disabled = false;
-            }, 900);
+            } else {
+                alert("Invalid code! Try typing: AURA20");
+            }
+        }
+
+        function updateCartUI() {
+            const countEl = document.getElementById('cart-count');
+            const itemsContainer = document.getElementById('cart-items');
+            const totalItems = cart.reduce((sum, i) => sum + i.qty, 0);
+            countEl.innerText = totalItems;
+
+            let subtotal = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            if (discountActive) subtotal = subtotal * 0.8; // 20% off
+
+            // Update Free Shipping Bar ($200 threshold)
+            const freeShipThreshold = 200;
+            const progress = Math.min(100, (subtotal / freeShipThreshold) * 100);
+            const shipBar = document.getElementById('shipping-bar');
+            const shipText = document.getElementById('shipping-text');
+            const shipCostEl = document.getElementById('cart-shipping');
+
+            shipBar.style.width = `${progress}%`;
+            let shippingFee = 15;
+
+            if (subtotal >= freeShipThreshold || subtotal === 0) {
+                shippingFee = 0;
+                shipCostEl.innerText = subtotal === 0 ? "$0.00" : "FREE";
+                if (subtotal >= freeShipThreshold) {
+                    shipBar.className = "h-full bg-emerald-500 transition-all duration-300";
+                    shipText.innerHTML = "🎉 <span class='text-emerald-600 font-bold'>You unlocked FREE Express Shipping!</span>";
+                } else {
+                    shipText.innerHTML = "Add <span class='font-bold'>$200</span> for FREE Express Shipping!";
+                }
+            } else {
+                const remaining = (freeShipThreshold - subtotal).toFixed(0);
+                shipBar.className = "h-full bg-amber-400 transition-all duration-300";
+                shipText.innerHTML = `Add <span class="text-zinc-900 font-bold">$${remaining}</span> more for FREE Express Shipping!`;
+                shipCostEl.innerText = "$15.00";
+            }
+
+            // Render Cart Items
+            if (cart.length === 0) {
+                itemsContainer.innerHTML = `<div class="text-center py-12 text-zinc-400 text-sm">Your shopping bag is empty.</div>`;
+            } else {
+                itemsContainer.innerHTML = cart.map(item => `
+                    <div class="flex items-center gap-3 bg-zinc-50 border border-zinc-200/80 p-3 rounded-2xl">
+                        <img src="${item.img}" class="w-16 h-16 rounded-xl object-cover shrink-0">
+                        <div class="flex-1">
+                            <h4 class="text-xs font-bold text-zinc-900">${item.name}</h4>
+                            <div class="text-xs font-extrabold text-zinc-600 mt-0.5">$${item.price}</div>
+                            <div class="flex items-center gap-2 mt-2">
+                                <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 rounded-md bg-white border border-zinc-300 text-xs font-bold">-</button>
+                                <span class="text-xs font-bold">${item.qty}</span>
+                                <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 rounded-md bg-white border border-zinc-300 text-xs font-bold">+</button>
+                            </div>
+                        </div>
+                        <div class="text-sm font-extrabold text-zinc-900">$${(item.price * item.qty).toFixed(0)}</div>
+                    </div>
+                `).join('');
+            }
+
+            const finalTotal = subtotal + shippingFee;
+            document.getElementById('cart-total').innerText = `$${finalTotal.toFixed(2)}`;
+        }
+
+        function toggleCart(show) {
+            const overlay = document.getElementById('cart-overlay');
+            if (show) overlay.classList.remove('hidden');
+            else overlay.classList.add('hidden');
+        }
+
+            function openCheckout() {
+            if (cart.length === 0) {
+                alert("Your bag is empty! Add a product first.");
+                return;
+            }
+            toggleCart(false);
+            
+            // የሚከፈለውን ጠቅላላ ዋጋ በ"Pay Now" ቁልፉ ላይ አሳይ
+            document.getElementById('checkout-pay-amount').innerText = document.getElementById('cart-total').innerText;
+            document.getElementById('checkout-form-step').classList.remove('hidden');
+            document.getElementById('checkout-success-step').classList.add('hidden');
+
+            const modal = document.getElementById('checkout-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+             async function processPayment(event) {
+            event.preventDefault();
+            const form = event.target;
+            const inputs = form.querySelectorAll('input');
+            const custName = inputs[0].value.trim();
+            const custEmail = inputs[1].value.trim();
+            const custCity = inputs[2].value.trim();
+            const custAddress = inputs[3].value.trim();
+            const cardNumber = inputs[4].value.replace(/\s+/g, '');
+            const cardExpiry = inputs[5].value.trim();
+            const cardCvc = inputs[6].value.trim();
+            const payBtn = document.getElementById('pay-now-btn');
+
+            let errEl = document.getElementById('checkout-error-box');
+            if (!errEl) {
+                errEl = document.createElement('p');
+                errEl.id = 'checkout-error-box';
+                errEl.className = "text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3 font-bold text-center";
+                form.insertBefore(errEl, payBtn);
+            }
+
+            // 1. ኢሜይል ፈትሽ
+            if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(custEmail)) {
+                errEl.innerText = "❌ Invalid Email: Please enter a valid email address for your receipt.";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            // 2. የካርድ ቁጥር (ከ13 እስከ 16 ቁጥሮች ብቻ መሆኑን ፈትሽ)
+            if (!/^\d{13,16}$/.test(cardNumber)) {
+                errEl.innerText = "❌ Invalid Card Number: Please enter a valid 16-digit card number (numbers only).";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            // 3. CVC (3 ወይም 4 ቁጥር መሆኑን ፈትሽ)
+            if (!/^\d{3,4}$/.test(cardCvc)) {
+                errEl.innerText = "❌ Invalid CVC: Security code must be 3 or 4 digits (e.g. 123).";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            errEl.classList.add('hidden');
+            payBtn.innerText = "Processing Secure Payment...";
+            payBtn.disabled = true;
+
+            const orderRef = '#AURA-' + Math.floor(1000 + Math.random() * 9000);
+            const totalPaid = document.getElementById('cart-total').innerText;
+
+            try {
+                // 👇 እዚህ ጋር የFormspree ሊንክህን አስገባ!
+                await fetch("https://formspree.io/f/mrpqyzge", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                    body: JSON.stringify({
+                        project: "AURA Store Order",
+                        order_number: orderRef,
+                        customer_name: custName,
+                        customer_email: custEmail,
+                        shipping_address: `${custAddress}, ${custCity}`,
+                        total_paid: totalPaid
+                    })
+                });
+            } catch (e) {}
+
+            document.getElementById('receipt-name').innerText = custName.split(' ')[0];
+            document.getElementById('order-number').innerText = orderRef;
+            document.getElementById('checkout-form-step').classList.add('hidden');
+            document.getElementById('checkout-success-step').classList.remove('hidden');
+
+            cart = [];
+            discountActive = false;
+            updateCartUI();
+            payBtn.disabled = false;
         }
 
         function closeCheckout() {
